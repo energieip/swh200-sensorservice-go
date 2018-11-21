@@ -1,5 +1,5 @@
 hash: a4ed81054a890a509b3d8d9df9e2daa98f827bea7dabbdafe4572bc62b78272b
-updated: 2018-11-20T14:47:13.387687269+01:00
+updated: 2018-11-21T18:24:04.671611591+01:00
 imports:
 - name: github.com/cenkalti/backoff
   version: 62661b46c4093e2c1f38d943e663db1a29873e80
@@ -16,7 +16,7 @@ imports:
   subpackages:
   - pkg/network
 - name: github.com/energieip/common-sensor-go
-  version: 193ea0173c15f5f8226d12e3f9e06f4529f80d50
+  version: d750d5444fca38f0235ca3ec82aba641bb2a19fc
   subpackages:
   - pkg/driversensor
 - name: github.com/energieip/swh200-service-go
@@ -53,7 +53,7 @@ imports:
   - proxy
   - websocket
 - name: golang.org/x/sys
-  version: ec83556a53fe16b65c452a104ea9d1e86a671852
+  version: 0cf1ed9e522b7dbb416f080a5c8003de9b702bf4
   subpackages:
   - unix
   - windows
