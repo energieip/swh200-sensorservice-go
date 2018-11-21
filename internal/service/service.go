@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/energieip/common-database-go/pkg/database"
-	"github.com/energieip/common-sensor-go/pkg/driversensor"
 	"github.com/energieip/common-network-go/pkg/network"
+	"github.com/energieip/common-sensor-go/pkg/driversensor"
 	"github.com/energieip/swh200-sensorservice-go/pkg/config"
 	"github.com/energieip/swh200-sensorservice-go/pkg/tools"
 	"github.com/romana/rlog"
@@ -36,7 +36,7 @@ func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 	s.sensors[sensor.Mac] = &sensor
 	criteria := make(map[string]interface{})
 	criteria["mac"] = sensor.Mac
-	criteria["switchMac"] = sensor.SwitchMac
+	criteria["switchMac"] = s.mac
 	sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
 	if err != nil || sensorStored == nil {
 		// Check if the serial already exist in database (case restart process)
@@ -100,7 +100,7 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 	} else {
 		criteria := make(map[string]interface{})
 		criteria["mac"] = conf.Mac
-                criteria["switchMac"] = s.mac
+		criteria["switchMac"] = s.mac
 		sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
 		if err != nil || sensorStored == nil {
 			return
@@ -189,8 +189,10 @@ func (s *SensorService) Initialize(confFile string) error {
 		return err
 	}
 
-	confDb := database.DatabaseConfig{}
-	confDb.IP = conf.DatabaseIP
+	confDb := database.DatabaseConfig{
+		IP:   conf.DatabaseIP,
+		Port: conf.DatabasePort,
+	}
 	err = db.Initialize(confDb)
 	if err != nil {
 		rlog.Error("Cannot connect to database " + err.Error())
@@ -216,15 +218,16 @@ func (s *SensorService) Initialize(confFile string) error {
 	callbacks := make(map[string]func(client network.Client, msg network.Message))
 	callbacks["/read/sensor/+/"+driversensor.UrlHello] = s.onDriverHello
 	callbacks["/read/sensor/+/"+driversensor.UrlStatus] = s.onDriverStatus
-	callbacks["/write/switch/"+s.mac+"/sensor/setup/config"] = s.onSetup
-	callbacks["/write/switch/"+s.mac+"/sensor/update/settings"] = s.onUpdate
+	callbacks["/write/switch/sensor/setup/config"] = s.onSetup
+	callbacks["/write/switch/sensor/update/settings"] = s.onUpdate
 
-	confDrivers := network.NetworkConfig{}
-	confDrivers.IP = conf.DriversBrokerIP
-	confDrivers.Port = conf.DriversBrokerPort
-	confDrivers.ClientName = clientID
-	confDrivers.Callbacks = callbacks
-	confDrivers.LogLevel = *conf.LogLevel
+	confDrivers := network.NetworkConfig{
+		IP:         conf.DriversBrokerIP,
+		Port:       conf.DriversBrokerPort,
+		ClientName: clientID,
+		Callbacks:  callbacks,
+		LogLevel:   *conf.LogLevel,
+	}
 	err = s.broker.Initialize(confDrivers)
 	if err != nil {
 		rlog.Error("Cannot connect to broker " + conf.DriversBrokerIP + " error: " + err.Error())
