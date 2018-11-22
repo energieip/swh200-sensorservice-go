@@ -22,49 +22,51 @@ type SensorService struct {
 }
 
 func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
+	var dbID string
 	if val, ok := s.sensors[sensor.Mac]; ok {
 		sensor.ID = val.ID
+		dbID = val.ID
 		if *val == sensor {
 			// No change to register
 			return nil
 		}
-
-		s.sensors[sensor.Mac] = &sensor
-		return s.db.UpdateRecord(driversensor.DbName, driversensor.TableName, sensor.ID, s.sensors[sensor.Mac].ToMapInterface())
 	}
-	var dbID string
+
 	s.sensors[sensor.Mac] = &sensor
-	criteria := make(map[string]interface{})
-	criteria["mac"] = sensor.Mac
-	criteria["switchMac"] = s.mac
-	sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
-	if err != nil || sensorStored == nil {
+	if dbID != "" {
 		// Check if the serial already exist in database (case restart process)
-		dbID, err = s.db.InsertRecord(driversensor.DbName, driversensor.TableName, s.sensors[sensor.Mac].ToMapInterface())
-		if err != nil {
-			return err
-		}
-	} else {
-		m := sensorStored.(map[string]interface{})
-		id, ok := m["id"]
-		if !ok {
-			id, ok = m["ID"]
-		}
-		if ok {
-			dbID = id.(string)
-			s.sensors[sensor.Mac] = &sensor
-			err = s.db.UpdateRecord(driversensor.DbName, driversensor.TableName, dbID, s.sensors[sensor.Mac].ToMapInterface())
-			if err != nil {
-				return err
+		criteria := make(map[string]interface{})
+		criteria["Mac"] = sensor.Mac
+		criteria["SwitchMac"] = s.mac
+		sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
+		if err == nil && sensorStored != nil {
+			m := sensorStored.(map[string]interface{})
+			id, ok := m["id"]
+			if !ok {
+				id, ok = m["ID"]
+			}
+			if ok {
+				dbID = id.(string)
 			}
 		}
+	}
+	var err error
+
+	if dbID == "" {
+		dbID, err = s.db.InsertRecord(driversensor.DbName, driversensor.TableName, s.sensors[sensor.Mac])
+	} else {
+		err = s.db.UpdateRecord(driversensor.DbName, driversensor.TableName, dbID, s.sensors[sensor.Mac])
+	}
+
+	if err != nil {
+		return err
 	}
 	s.sensors[sensor.Mac].ID = dbID
 	return nil
 }
 
 func (s *SensorService) onSetup(client network.Client, msg network.Message) {
-	rlog.Debug("Sensor service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("Sensor service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var sensor driversensor.SensorSetup
 	err := json.Unmarshal(msg.Payload(), &sensor)
 	if err != nil {
@@ -87,7 +89,7 @@ func (s *SensorService) onSetup(client network.Client, msg network.Message) {
 }
 
 func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
-	rlog.Debug("Sensor service onUpdate: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("Sensor service onUpdate: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var conf driversensor.SensorConf
 	err := json.Unmarshal(msg.Payload(), &conf)
 	if err != nil {
@@ -99,14 +101,14 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 		topic = val.Topic
 	} else {
 		criteria := make(map[string]interface{})
-		criteria["mac"] = conf.Mac
-		criteria["switchMac"] = s.mac
+		criteria["Mac"] = conf.Mac
+		criteria["SwitchMac"] = s.mac
 		sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
 		if err != nil || sensorStored == nil {
 			return
 		}
 		l := sensorStored.(map[string]interface{})
-		if url, ok := l["topic"]; ok {
+		if url, ok := l["Topic"]; ok {
 			topic = url.(string)
 		}
 	}
@@ -124,7 +126,7 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 }
 
 func (s *SensorService) onDriverHello(client network.Client, msg network.Message) {
-	rlog.Debug("Sensor service Hello: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("Sensor service Hello: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var sensor driversensor.Sensor
 	err := json.Unmarshal(msg.Payload(), &sensor)
 	if err != nil {
@@ -145,7 +147,7 @@ func (s *SensorService) onDriverHello(client network.Client, msg network.Message
 
 func (s *SensorService) onDriverStatus(client network.Client, msg network.Message) {
 	topic := msg.Topic()
-	rlog.Debug("Sensor service status: Received topic: " + topic + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("Sensor service status: Received topic: " + topic + " payload: " + string(msg.Payload()))
 	var sensor driversensor.Sensor
 	err := json.Unmarshal(msg.Payload(), &sensor)
 	if err != nil {
@@ -203,7 +205,7 @@ func (s *SensorService) Initialize(confFile string) error {
 	if err != nil {
 		rlog.Warn("Create DB ", err.Error())
 	}
-	err = s.db.CreateTable(driversensor.DbName, driversensor.TableName)
+	err = s.db.CreateTable(driversensor.DbName, driversensor.TableName, &driversensor.Sensor{})
 	if err != nil {
 		rlog.Warn("Create table ", err.Error())
 	}
@@ -235,7 +237,6 @@ func (s *SensorService) Initialize(confFile string) error {
 	}
 
 	rlog.Info(clientID + " connected to drivers broker " + conf.DriversBrokerIP)
-
 	rlog.Info("Sensor service started")
 	return nil
 }
