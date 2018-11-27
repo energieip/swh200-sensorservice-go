@@ -6,7 +6,7 @@ PartOf=rethinkdb.service network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/sensorservice -c /etc/sensorservice/config.json
+ExecStart=/usr/local/bin/energieip-sensor -c /etc/energieip-sensor/config.json
 KillMode=process
 PrivateTmp=true
 Restart=always
