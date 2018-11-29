@@ -8,8 +8,8 @@ import (
 	"github.com/energieip/common-database-go/pkg/database"
 	"github.com/energieip/common-network-go/pkg/network"
 	"github.com/energieip/common-sensor-go/pkg/driversensor"
+	pkg "github.com/energieip/common-service-go/pkg/service"
 	"github.com/energieip/common-tools-go/pkg/tools"
-	"github.com/energieip/swh200-sensorservice-go/pkg/config"
 	"github.com/romana/rlog"
 )
 
@@ -57,7 +57,6 @@ func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 	} else {
 		err = s.db.UpdateRecord(driversensor.DbName, driversensor.TableName, dbID, s.sensors[sensor.Mac])
 	}
-
 	if err != nil {
 		return err
 	}
@@ -175,12 +174,12 @@ func (s *SensorService) Initialize(confFile string) error {
 	clientID := "Sensor" + hostname
 	s.mac = strings.ToUpper(strings.Replace(tools.GetMac(), ":", "", -1))
 
-	conf, err := config.ReadConfig(confFile)
+	conf, err := pkg.ReadServiceConfig(confFile)
 	if err != nil {
 		rlog.Error("Cannot parse configuration file " + err.Error())
 		return err
 	}
-	os.Setenv("RLOG_LOG_LEVEL", *conf.LogLevel)
+	os.Setenv("RLOG_LOG_LEVEL", conf.LogLevel)
 	os.Setenv("RLOG_LOG_NOTIME", "yes")
 	rlog.UpdateEnv()
 	rlog.Info("Starting Sensor service")
@@ -192,8 +191,8 @@ func (s *SensorService) Initialize(confFile string) error {
 	}
 
 	confDb := database.DatabaseConfig{
-		IP:   conf.DatabaseIP,
-		Port: conf.DatabasePort,
+		IP:   conf.DB.ClientIP,
+		Port: conf.DB.ClientPort,
 	}
 	err = db.Initialize(confDb)
 	if err != nil {
@@ -212,7 +211,7 @@ func (s *SensorService) Initialize(confFile string) error {
 
 	driversBroker, err := network.NewNetwork(network.MQTT)
 	if err != nil {
-		rlog.Error("Cannot connect to broker " + conf.DriversBrokerIP + " error: " + err.Error())
+		rlog.Error("Cannot connect to broker " + conf.LocalBroker.IP + " error: " + err.Error())
 		return err
 	}
 	s.broker = driversBroker
@@ -224,19 +223,19 @@ func (s *SensorService) Initialize(confFile string) error {
 	callbacks["/write/switch/sensor/update/settings"] = s.onUpdate
 
 	confDrivers := network.NetworkConfig{
-		IP:         conf.DriversBrokerIP,
-		Port:       conf.DriversBrokerPort,
+		IP:         conf.LocalBroker.IP,
+		Port:       conf.LocalBroker.Port,
 		ClientName: clientID,
 		Callbacks:  callbacks,
-		LogLevel:   *conf.LogLevel,
+		LogLevel:   conf.LogLevel,
 	}
 	err = s.broker.Initialize(confDrivers)
 	if err != nil {
-		rlog.Error("Cannot connect to broker " + conf.DriversBrokerIP + " error: " + err.Error())
+		rlog.Error("Cannot connect to broker " + conf.LocalBroker.IP + " error: " + err.Error())
 		return err
 	}
 
-	rlog.Info(clientID + " connected to drivers broker " + conf.DriversBrokerIP)
+	rlog.Info(clientID + " connected to drivers broker " + conf.LocalBroker.IP)
 	rlog.Info("Sensor service started")
 	return nil
 }
