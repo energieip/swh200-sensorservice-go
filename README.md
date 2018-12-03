@@ -1,6 +1,11 @@
 Switch Service Management for Sensor drivers
 ============================================
 
+Sensor service is responsible for:
+* Getting sensors status and storing it to database
+* Sending command to sensor drivers
+* Getting command/configuration from the switch core and group services
+
 Build Requirement: 
 * golang-go > 1.9
 * glide
