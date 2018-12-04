@@ -64,6 +64,29 @@ func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 	return nil
 }
 
+func (s *SensorService) getSensor(mac string) *driversensor.Sensor {
+	if val, ok := s.sensors[mac]; ok {
+		return val
+	}
+	criteria := make(map[string]interface{})
+	criteria["Mac"] = mac
+	criteria["SwitchMac"] = s.mac
+	sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
+	if err != nil || sensorStored == nil {
+		return nil
+	}
+	cell, _ := driversensor.ToSensor(sensorStored)
+	return cell
+}
+
+func (s *SensorService) getTopic(mac string) string {
+	cell := s.getSensor(mac)
+	if cell != nil {
+		return cell.Topic
+	}
+	return ""
+}
+
 func (s *SensorService) onSetup(client network.Client, msg network.Message) {
 	rlog.Debug("Sensor service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var sensor driversensor.SensorSetup
@@ -72,18 +95,18 @@ func (s *SensorService) onSetup(client network.Client, msg network.Message) {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	val, ok := s.sensors[sensor.Mac]
-	if !ok {
+	topic := s.getTopic(sensor.Mac)
+	if topic == "" {
 		rlog.Warnf("Sensor %v not found", sensor.Mac)
 		return
 	}
-	url := "/write/" + val.Topic + "/" + driversensor.UrlSetup
-	sensorDump, _ := sensor.ToJSON()
-	err = s.broker.SendCommand(url, sensorDump)
+	url := "/write/" + topic + "/" + driversensor.UrlSetup
+	dump, _ := sensor.ToJSON()
+	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration for driver " + sensor.Mac + " err: " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + sensor.Mac)
+		rlog.Info("New configuration has been sent to " + sensor.Mac + " on topic: " + url + " dump: " + dump)
 	}
 }
 
@@ -95,23 +118,9 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	var topic string
-	if val, ok := s.sensors[conf.Mac]; ok {
-		topic = val.Topic
-	} else {
-		criteria := make(map[string]interface{})
-		criteria["Mac"] = conf.Mac
-		criteria["SwitchMac"] = s.mac
-		sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
-		if err != nil || sensorStored == nil {
-			return
-		}
-		l := sensorStored.(map[string]interface{})
-		if url, ok := l["Topic"]; ok {
-			topic = url.(string)
-		}
-	}
+	topic := s.getTopic(conf.Mac)
 	if topic == "" {
+		rlog.Warnf("Sensor %v not found", conf.Mac)
 		return
 	}
 	url := "/write/" + topic + "/update/settings"
@@ -120,7 +129,7 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration to driver " + conf.Mac + " err " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + conf.Mac)
+		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url)
 	}
 }
 
