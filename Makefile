@@ -1,4 +1,4 @@
-COMPONENT=energieip-sensor
+COMPONENT=energieip-swh200-sensor
 
 BINARIES=bin/$(COMPONENT)-armhf bin/$(COMPONENT)-amd64
 
