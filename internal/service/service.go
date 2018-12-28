@@ -21,6 +21,34 @@ type SensorService struct {
 	mac     string //Switch mac address
 }
 
+type SetupCmd struct {
+	driversensor.SensorSetup
+	CmdType string `json:"cmdType"`
+}
+
+// ToJSON dump SetupCmd struct
+func (sensor SetupCmd) ToJSON() (string, error) {
+	inrec, err := json.Marshal(sensor)
+	if err != nil {
+		return "", err
+	}
+	return string(inrec[:]), err
+}
+
+type UpdateCmd struct {
+	driversensor.SensorConf
+	CmdType string `json:"cmdType"`
+}
+
+// ToJSON dump UpdateCmd struct
+func (sensor UpdateCmd) ToJSON() (string, error) {
+	inrec, err := json.Marshal(sensor)
+	if err != nil {
+		return "", err
+	}
+	return string(inrec[:]), err
+}
+
 func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 	var dbID string
 	if val, ok := s.sensors[sensor.Mac]; ok {
@@ -101,7 +129,12 @@ func (s *SensorService) onSetup(client network.Client, msg network.Message) {
 		return
 	}
 	url := "/write/" + topic + "/" + driversensor.UrlSetup
-	dump, _ := sensor.ToJSON()
+
+	setupCmd := SetupCmd{}
+	setupCmd.SensorSetup = sensor
+	setupCmd.CmdType = "update"
+
+	dump, _ := setupCmd.ToJSON()
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration for driver " + sensor.Mac + " err: " + err.Error())
@@ -124,12 +157,17 @@ func (s *SensorService) onUpdate(client network.Client, msg network.Message) {
 		return
 	}
 	url := "/write/" + topic + "/update/settings"
-	dump, _ := conf.ToJSON()
+
+	updateCmd := UpdateCmd{}
+	updateCmd.SensorConf = conf
+	updateCmd.CmdType = "update"
+
+	dump, _ := updateCmd.ToJSON()
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration to driver " + conf.Mac + " err " + err.Error())
 	} else {
-		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url)
+		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url + " dump: " + dump)
 	}
 }
 
