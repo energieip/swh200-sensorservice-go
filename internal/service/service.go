@@ -132,7 +132,7 @@ func (s *SensorService) onSetup(client network.Client, msg network.Message) {
 
 	setupCmd := SetupCmd{}
 	setupCmd.SensorSetup = sensor
-	setupCmd.CmdType = "update"
+	setupCmd.CmdType = "setup"
 
 	dump, _ := setupCmd.ToJSON()
 	err = s.broker.SendCommand(url, dump)
