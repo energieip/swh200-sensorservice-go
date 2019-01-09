@@ -1,8 +1,8 @@
 hash: a4ed81054a890a509b3d8d9df9e2daa98f827bea7dabbdafe4572bc62b78272b
-updated: 2018-12-28T15:59:29.765295616+01:00
+updated: 2019-01-09T17:04:27.570177836+01:00
 imports:
 - name: github.com/cenkalti/backoff
-  version: 62661b46c4093e2c1f38d943e663db1a29873e80
+  version: 1e4cf3da559842a91afcb6ea6141451e6c30c618
 - name: github.com/eclipse/paho.mqtt.golang
   version: 379fd9f99ba5b1f02c9fffb5e5952416ef9301dc
   subpackages:
@@ -12,15 +12,15 @@ imports:
   subpackages:
   - pkg/database
 - name: github.com/energieip/common-network-go
-  version: 01ec1e24bba2894274ea78d510b5fe7f2649352a
+  version: 85e32d2b19b5a14867ceff51399914fd7b2b07d3
   subpackages:
   - pkg/network
 - name: github.com/energieip/common-sensor-go
-  version: 1a29593d423a2a742bc861778d42e3448c267444
+  version: 376d97c688b9bbeef2a98192356dcbb971b20f8b
   subpackages:
   - pkg/driversensor
 - name: github.com/energieip/common-service-go
-  version: b961505ab34088b37ffe57641fbb5451dcb03e83
+  version: 31d0a3cf8276cd65b3f2997ed2c0e32660f371c3
   subpackages:
   - pkg/service
 - name: github.com/energieip/common-tools-go
@@ -28,7 +28,7 @@ imports:
   subpackages:
   - pkg/tools
 - name: github.com/golang/protobuf
-  version: 1d3f30b51784bec5aad268e59fd3c2fc1c2fe73f
+  version: 347cf4a86c1cb8d262994d8ef5924d4576c5b331
   subpackages:
   - proto
 - name: github.com/hailocab/go-hostpool
@@ -43,21 +43,21 @@ imports:
 - name: github.com/romana/rlog
   version: f018bc92e7d71f27c04e04cbf008860416c21d01
 - name: github.com/sirupsen/logrus
-  version: 6180652bb05834ae178c93911ddae14b689408b7
+  version: eef6b768ab01a0598a0a6db97bad2a37d31df1d1
 - name: golang.org/x/crypto
-  version: 505ab145d0a99da450461ae2c1a9f6cd10d1f447
+  version: ff983b9c42bc9fbf91556e191cc8efb585c16908
   subpackages:
   - pbkdf2
   - ssh/terminal
 - name: golang.org/x/net
-  version: 927f97764cc334a6575f4b7a1584a147864d5723
+  version: 1e06a53dbb7e2ed46e91183f219db23c6943c532
   subpackages:
   - context
   - internal/socks
   - proxy
   - websocket
 - name: golang.org/x/sys
-  version: 9a3f9b0469bbc6b8802087ae5c0af9f61502de01
+  version: 48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf
   subpackages:
   - unix
   - windows

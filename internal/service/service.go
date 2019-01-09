@@ -76,11 +76,15 @@ func (s *SensorService) Initialize(confFile string) error {
 	callbacks["/write/switch/sensor/update/settings"] = s.onUpdate
 
 	confDrivers := network.NetworkConfig{
-		IP:         conf.LocalBroker.IP,
-		Port:       conf.LocalBroker.Port,
-		ClientName: clientID,
-		Callbacks:  callbacks,
-		LogLevel:   conf.LogLevel,
+		IP:               conf.LocalBroker.IP,
+		Port:             conf.LocalBroker.Port,
+		ClientName:       clientID,
+		Callbacks:        callbacks,
+		LogLevel:         conf.LogLevel,
+		User:             conf.LocalBroker.Login,
+		Password:         conf.LocalBroker.Password,
+		ClientKey:        conf.LocalBroker.KeyPath,
+		ServerCertificat: conf.LocalBroker.CaPath,
 	}
 	err = s.broker.Initialize(confDrivers)
 	if err != nil {
