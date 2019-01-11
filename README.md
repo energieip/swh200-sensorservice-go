@@ -1,4 +1,4 @@
-Switch Service Management for Sensor drivers
+Switch Service Management for Sensor drivers ** deprecated **
 ============================================
 
 Sensor service is responsible for:
