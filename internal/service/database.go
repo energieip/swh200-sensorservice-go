@@ -19,7 +19,7 @@ func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 		criteria := make(map[string]interface{})
 		criteria["Mac"] = sensor.Mac
 		criteria["SwitchMac"] = s.mac
-		sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
+		sensorStored, err := s.db.GetRecord(driversensor.DbStatus, driversensor.TableName, criteria)
 		if err == nil && sensorStored != nil {
 			m := sensorStored.(map[string]interface{})
 			id, ok := m["id"]
@@ -34,9 +34,9 @@ func (s *SensorService) updateDatabase(sensor driversensor.Sensor) error {
 	var err error
 
 	if dbID == "" {
-		dbID, err = s.db.InsertRecord(driversensor.DbName, driversensor.TableName, s.sensors[sensor.Mac])
+		dbID, err = s.db.InsertRecord(driversensor.DbStatus, driversensor.TableName, s.sensors[sensor.Mac])
 	} else {
-		err = s.db.UpdateRecord(driversensor.DbName, driversensor.TableName, dbID, s.sensors[sensor.Mac])
+		err = s.db.UpdateRecord(driversensor.DbStatus, driversensor.TableName, dbID, s.sensors[sensor.Mac])
 	}
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (s *SensorService) getSensor(mac string) *driversensor.Sensor {
 	criteria := make(map[string]interface{})
 	criteria["Mac"] = mac
 	criteria["SwitchMac"] = s.mac
-	sensorStored, err := s.db.GetRecord(driversensor.DbName, driversensor.TableName, criteria)
+	sensorStored, err := s.db.GetRecord(driversensor.DbStatus, driversensor.TableName, criteria)
 	if err != nil || sensorStored == nil {
 		return nil
 	}

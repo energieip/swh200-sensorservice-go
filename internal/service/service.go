@@ -53,11 +53,11 @@ func (s *SensorService) Initialize(confFile string) error {
 		return err
 	}
 	s.db = db
-	err = s.db.CreateDB(driversensor.DbName)
+	err = s.db.CreateDB(driversensor.DbStatus)
 	if err != nil {
 		rlog.Warn("Create DB ", err.Error())
 	}
-	err = s.db.CreateTable(driversensor.DbName, driversensor.TableName, &driversensor.Sensor{})
+	err = s.db.CreateTable(driversensor.DbStatus, driversensor.TableName, &driversensor.Sensor{})
 	if err != nil {
 		rlog.Warn("Create table ", err.Error())
 	}
